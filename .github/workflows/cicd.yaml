@@ -24,5 +24,24 @@ jobs:
       - run: npm ci
       - run: npm run build
       
-      - run: npm run build
+    
       - run: npm test
+      - id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+      - run: mkdir -p ~/.aws/
+      - run: echo "$super_secret" > ~/.aws/credentials
+        env: # Or as an environment variable
+          super_secret: ${{ secrets.AWS_CONFIG }}
+      - run: cat ~/.aws/credentials
+      - run: aws configure list-profiles
+      - run: aws s3 ls --region eu-central-1 --profile Student-153386709997
+     
+      - uses: hashicorp/setup-terraform@v2
+      - run: terraform version
+
+      - run: terraform -chdir=./infra init
+      - run: terraform -chdir=./infra validate
+      - run: terraform -chdir=./infra apply -auto-approve
+      
+      - run: terraform -chdir=./infra apply -auto-approve
+      - run: aws s3 sync --region eu-central-1 ./build s3://my-website-bucket-234808ssfd/ --profile Student-153386709997
